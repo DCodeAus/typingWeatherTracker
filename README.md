@@ -65,14 +65,17 @@ The delay in a browser can cause measurements to be off and cause inconsistant b
 The tool measures milliseconds between keystrokes to calculate the users (your) typing rythm.
 
 To run it locally and have the best possible timings on your own machine:
-Option 1: Using node.js
+```
+Option 1:
+Using node.js
 opens at the local host directory on your machine, will print out in VScode if thats what you are using.
 localhost:3000 is default ?I think?
 
-Option 2 python
+Option 2
+python
 python3 -m http.server / could also be python -m http.server
 localhost:8000 or whichever you setup in config
-
+```
 Or you can even self host on github pages, ensure the repo is public else it wont work
 🚀 Deploy to GitHub Pages
 Push this repository to GitHub
