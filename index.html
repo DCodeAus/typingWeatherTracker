@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typing Weather</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 8px; font-weight: 600; }
+    p.hint { color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem; }
+    textarea {
+      width: 100%;
+      max-width: 500px;
+      height: 120px;
+      padding: 12px;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #f8fafc;
+      font-size: 1rem;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: #3b82f6; }
+    #result {
+      margin-top: 20px;
+      padding: 16px;
+      background: #1e293b;
+      border-radius: 8px;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #result.visible { opacity: 1; }
+    .weather-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+    .weather-desc { color: #cbd5e1; margin-bottom: 8px; }
+    .metrics { font-size: 0.8rem; color: #64748b; }
+    button {
+      margin-top: 16px;
+      padding: 8px 16px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button:hover { background: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>🌦️ Typing Weather</h1>
+  <p class="hint">Type freely. Pause for 1.5s to check your mental weather.</p>
+  <textarea id="input" placeholder="Start typing anything here..."></textarea>
+  <div id="result">
+    <div class="weather-title">Waiting...</div>
+    <div class="weather-desc">Keep typing to generate your forecast.</div>
+    <div class="metrics"></div>
+  </div>
+  <button id="reset">Reset Session</button>
+
+  <script>
+    const input = document.getElementById('input');
+    const result = document.getElementById('result');
+    const resetBtn = document.getElementById('reset');
+
+    let keystrokes = [];
+    let lastActive = Date.now();
+    let analyzing = false;
+
+    // Track every keystroke
+    input.addEventListener('keydown', (e) => {
+      keystrokes.push({ time: Date.now(), key: e.key });
+      lastActive = Date.now();
+      result.classList.remove('visible');
+      analyzing = false;
+    });
+
+    // Check weather when user pauses
+    setInterval(() => {
+      if (!analyzing && Date.now() - lastActive > 1500 && keystrokes.length >= 5) {
+        analyzeWeather();
+      }
+    }, 500);
+
+    function analyzeWeather() {
+      analyzing = true;
+      const total = keystrokes.length;
+      const backspaces = keystrokes.filter(k => k.key === 'Backspace').length;
+      const editRatio = backspaces / total;
+      
+      // Calculate average time between keystrokes (in ms)
+      let intervals = [];
+      for (let i = 1; i < keystrokes.length; i++) {
+        intervals.push(keystrokes[i].time - keystrokes[i-1].time);
+      }
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const cpm = (total / (avgInterval / 1000)) * 60; 
+
+      // Determine weather
+      let title, emoji, desc;
+      if (cpm > 75 && editRatio < 0.12) {
+        title = "Clear Skies"; emoji = "☀️";
+        desc = "Flow state achieved. Thoughts are moving unimpeded.";
+      } else if (cpm > 75 && editRatio > 0.25) {
+        title = "Thunderstorms"; emoji = "⛈️";
+        desc = "Fast but erratic. Ideas colliding like lightning.";
+      } else if (cpm < 40 && editRatio < 0.08) {
+        title = "Misty Morning"; emoji = "🌫️";
+        desc = "Deliberate and calm. You're letting thoughts settle.";
+      } else if (editRatio > 0.35) {
+        title = "Dense Fog"; emoji = "🌫️";
+        desc = "Heavy second-guessing. Breathe. The path will clear.";
+      } else {
+        title = "Partly Cloudy"; emoji = "⛅";
+        desc = "A healthy mix of momentum and reflection. Nice balance.";
+      }
+
+      result.innerHTML = `
+        <div class="weather-title">${emoji} ${title}</div>
+        <div class="weather-desc">${desc}</div>
+        <div class="metrics">${Math.round(cpm)} CPM | ${Math.round(editRatio * 100)}% edits | ${Math.round(avgInterval)}ms avg pause</div>
+      `;
+      result.classList.add('visible');
+    }
+
+    // Reset functionality
+    resetBtn.addEventListener('click', () => {
+      keystrokes = [];
+      lastActive = Date.now();
+      analyzing = false;
+      input.value = '';
+      result.innerHTML = `
+        <div class="weather-title">Waiting...</div>
+        <div class="weather-desc">Keep typing to generate your forecast.</div>
+        <div class="metrics"></div>
+      `;
+      result.classList.remove('visible');
+    });
+  </script>
+</body>
+</html>
